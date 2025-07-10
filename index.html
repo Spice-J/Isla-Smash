@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Isla Smash</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Start Screen -->
+    <div id="start-screen">
+        <h1>Isla Smash</h1>
+        <button id="play-button">Play Game</button>
+    </div>
+    
+    <!-- Game Container (initially hidden) -->
+    <div id="game-container" class="hidden">
+        <!-- Game area where food items appear -->
+        <div id="game-area">
+            <!-- Food items will be dynamically added here -->
+        </div>
+        
+        <!-- Dad's face that occasionally appears -->
+        <div id="dad-face" class="dad-face hidden">
+            <div class="speech-bubble hidden">
+                <span class="speech-text"></span>
+            </div>
+            <div class="dad-image">👨</div>
+        </div>
+        
+        <!-- Mom's face in lower left corner -->
+        <div id="mom-face" class="mom-face hidden">
+            <div class="speech-bubble hidden">
+                <span class="speech-text"></span>
+            </div>
+            <div class="mom-image">👩</div>
+        </div>
+        
+        <!-- Sponge for cleanup -->
+        <!-- <div id="sponge" class="sponge hidden">
+            <div class="sponge-image">🧽</div>
+        </div> -->
+        
+        <!-- Bottom control area -->
+        <div id="bottom-controls">
+            <!-- Sponge moved outside bottom-controls for better drag handling -->
+        </div>
+        
+        <!-- Sponge for cleanup -->
+        <div id="sponge" class="sponge">
+            <div class="sponge-image">🧽</div>
+        </div>
+        
+        <!-- Game stats -->
+        <div id="game-stats">
+            <div id="score">Smash Count: <span id="smash-count">0</span></div>
+            <div id="bonk-count">Dad Bonks: <span id="dad-bonks">0</span></div>
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html> 
