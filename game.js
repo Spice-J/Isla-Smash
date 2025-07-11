@@ -238,10 +238,27 @@ class IslaSmashGame {
         const sudzElement = document.createElement('div');
         sudzElement.className = 'sudz-trail';
         sudzElement.style.position = 'fixed';
-        sudzElement.style.left = (x - 25) + 'px'; // Center the sudz
-        sudzElement.style.top = (y - 25) + 'px';
-        sudzElement.style.width = '50px';
-        sudzElement.style.height = '50px';
+        
+        // Responsive sudz size based on screen width
+        let sudzSize, offset;
+        if (window.innerWidth <= 768) {
+            // Mobile
+            sudzSize = 40;
+            offset = 20;
+        } else if (window.innerWidth <= 1024) {
+            // Tablet
+            sudzSize = 45;
+            offset = 22.5;
+        } else {
+            // Desktop
+            sudzSize = 50;
+            offset = 25;
+        }
+        
+        sudzElement.style.left = (x - offset) + 'px'; // Center the sudz
+        sudzElement.style.top = (y - offset) + 'px';
+        sudzElement.style.width = sudzSize + 'px';
+        sudzElement.style.height = sudzSize + 'px';
         sudzElement.style.zIndex = '999';
         sudzElement.style.pointerEvents = 'none';
         
@@ -257,16 +274,16 @@ class IslaSmashGame {
         sudzElement.appendChild(sudzImg);
         document.body.appendChild(sudzElement);
         
-        // Fade out and remove after a short time
+        // Fade out and remove after a longer time
         setTimeout(() => {
-            sudzElement.style.transition = 'opacity 0.5s ease-out';
+            sudzElement.style.transition = 'opacity 0.8s ease-out';
             sudzElement.style.opacity = '0';
             setTimeout(() => {
                 if (sudzElement.parentNode) {
                     sudzElement.parentNode.removeChild(sudzElement);
                 }
-            }, 500);
-        }, 200);
+            }, 800);
+        }, 800);
     }
     
     stopSpongeDrag() {
@@ -465,10 +482,27 @@ class IslaSmashGame {
         const splatElement = document.createElement('div');
         splatElement.className = 'splat-effect';
         splatElement.style.position = 'absolute';
-        splatElement.style.left = (left - 20) + 'px'; // Center the splat
-        splatElement.style.top = (top - 20) + 'px';
-        splatElement.style.width = '80px';
-        splatElement.style.height = '80px';
+        
+        // Responsive splat size based on screen width
+        let splatSize, splatOffset;
+        if (window.innerWidth <= 768) {
+            // Mobile
+            splatSize = 60;
+            splatOffset = 30;
+        } else if (window.innerWidth <= 1024) {
+            // Tablet
+            splatSize = 70;
+            splatOffset = 35;
+        } else {
+            // Desktop
+            splatSize = 80;
+            splatOffset = 40;
+        }
+        
+        splatElement.style.left = (left - splatOffset) + 'px'; // Center the splat
+        splatElement.style.top = (top - splatOffset) + 'px';
+        splatElement.style.width = splatSize + 'px';
+        splatElement.style.height = splatSize + 'px';
         splatElement.style.zIndex = '15';
         splatElement.style.pointerEvents = 'none';
         splatElement.style.animation = 'splatPop 1s ease-out forwards';
@@ -505,10 +539,30 @@ class IslaSmashGame {
         const bonkElement = document.createElement('div');
         bonkElement.className = 'bonk-effect';
         bonkElement.style.position = 'absolute';
-        bonkElement.style.left = (left + 30) + 'px'; // Position near dad's head
-        bonkElement.style.top = (top - 40) + 'px';
-        bonkElement.style.width = '80px';
-        bonkElement.style.height = '80px';
+        
+        // Responsive bonk size based on screen width
+        let bonkSize, bonkOffsetX, bonkOffsetY;
+        if (window.innerWidth <= 768) {
+            // Mobile
+            bonkSize = 60;
+            bonkOffsetX = 20;
+            bonkOffsetY = 30;
+        } else if (window.innerWidth <= 1024) {
+            // Tablet
+            bonkSize = 70;
+            bonkOffsetX = 25;
+            bonkOffsetY = 35;
+        } else {
+            // Desktop
+            bonkSize = 80;
+            bonkOffsetX = 30;
+            bonkOffsetY = 40;
+        }
+        
+        bonkElement.style.left = (left + bonkOffsetX) + 'px'; // Position near dad's head
+        bonkElement.style.top = (top - bonkOffsetY) + 'px';
+        bonkElement.style.width = bonkSize + 'px';
+        bonkElement.style.height = bonkSize + 'px';
         bonkElement.style.zIndex = '25';
         bonkElement.style.pointerEvents = 'none';
         bonkElement.style.animation = 'bonkPop 1s ease-out forwards';

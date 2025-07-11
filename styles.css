@@ -733,6 +733,17 @@ body {
         font-size: 35px;
     }
     
+    /* Splat and bonk effects for mobile */
+    .splat-effect {
+        width: 60px !important;
+        height: 60px !important;
+    }
+    
+    .bonk-effect {
+        width: 60px !important;
+        height: 60px !important;
+    }
+    
     #game-stats {
         font-size: 16px;
         padding: 10px;
@@ -783,6 +794,17 @@ body {
         font-size: 45px;
     }
     
+    /* Splat and bonk effects for tablet */
+    .splat-effect {
+        width: 70px !important;
+        height: 70px !important;
+    }
+    
+    .bonk-effect {
+        width: 70px !important;
+        height: 70px !important;
+    }
+    
     #game-stats {
         font-size: 20px;
         padding: 15px;
@@ -831,6 +853,17 @@ body {
         width: 90px;
         height: 90px;
         font-size: 40px;
+    }
+    
+    /* Splat and bonk effects for desktop */
+    .splat-effect {
+        width: 80px !important;
+        height: 80px !important;
+    }
+    
+    .bonk-effect {
+        width: 80px !important;
+        height: 80px !important;
     }
     
     #game-stats {
