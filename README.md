@@ -130,10 +130,17 @@ In `styles.css`, you can modify:
 
 ## Browser Compatibility
 
-- Chrome/Edge (recommended)
-- Safari
-- Firefox
-- Mobile browsers (iOS Safari, Chrome Mobile)
+**⚠️ Recommended Browser: Chrome/Edge**
+
+For the best experience, please use Chrome or Edge browsers. While the game works on Safari and Firefox, some features may not display optimally:
+
+- **Chrome/Edge**: Full functionality with optimal performance
+- **Safari**: May have font rendering issues and positioning quirks
+- **Firefox**: Generally works well
+- **Mobile browsers**: iOS Safari may have positioning issues; Chrome Mobile recommended
+
+### Safari Users
+If you're experiencing issues on Safari (especially with font rendering or element positioning), please try using Chrome or Edge for the best gameplay experience.
 
 ## Tips for Best Experience
 
