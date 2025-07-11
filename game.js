@@ -10,6 +10,13 @@ class IslaSmashGame {
         this.smashCount = document.getElementById('smash-count');
         this.dadBonks = document.getElementById('dad-bonks');
         
+        // End game elements
+        this.endScreen = document.getElementById('end-screen');
+        this.finalSmashCount = document.getElementById('final-smash-count');
+        this.finalBonkCount = document.getElementById('final-bonk-count');
+        this.exitButton = document.getElementById('exit-button');
+        this.playAgainButton = document.getElementById('play-again-button');
+        
         this.smashCounter = 0;
         this.dadBonkCounter = 0;
         this.isCleaning = false;
@@ -18,6 +25,7 @@ class IslaSmashGame {
         this.gameStartTime = null;
         this.dadSpawnStarted = false;
         this.momSpawnStarted = false;
+        this.momLastAppearance = 0; // Track when mom last appeared
         this.gameStarted = false;
         
         // Sponge dragging variables
@@ -99,6 +107,14 @@ class IslaSmashGame {
         document.addEventListener('mouseup', () => this.stopSpongeDrag());
         document.addEventListener('touchend', () => this.stopSpongeDrag());
         
+        // Exit button
+        this.exitButton.addEventListener('click', () => this.endGame());
+        this.exitButton.addEventListener('touchstart', () => this.endGame());
+        
+        // Play again button
+        this.playAgainButton.addEventListener('click', () => this.restartGame());
+        this.playAgainButton.addEventListener('touchstart', () => this.restartGame());
+        
         // Prevent context menu on right click
         this.gameArea.addEventListener('contextmenu', (e) => e.preventDefault());
     }
@@ -168,7 +184,7 @@ class IslaSmashGame {
             
             // Return sponge to original position
             this.sponge.style.left = '50%';
-            this.sponge.style.bottom = '110px';
+            this.sponge.style.bottom = '20px';
             this.sponge.style.top = '';
             this.sponge.style.transform = 'translateX(-50%)';
         }
@@ -258,7 +274,7 @@ class IslaSmashGame {
         
         // Random peak height (between 30% and 80% of screen height)
         const peakHeight = Math.random() * 50 + 30; // 30% to 80% of screen height
-        const animationDuration = 4 + Math.random() * 2; // 4-6 seconds
+        const animationDuration = 2.5 + Math.random() * 1.5; // 2.5-4 seconds
         
         // Create custom gravity animation
         foodItem.style.animation = 'none';
@@ -334,14 +350,28 @@ class IslaSmashGame {
         const speechBubble = this.dadFace.querySelector('.speech-bubble');
         speechBubble.classList.add('hidden');
         
+        // Show bonk indicator
+        const bonkIndicator = this.dadFace.querySelector('.bonk-indicator');
+        bonkIndicator.classList.remove('hidden');
+        
         // Change dad's image to bonked version
-        const dadImage = this.dadFace.querySelector('.dad-image');
-        dadImage.textContent = '😵'; // Bonked dad emoji
+        const angryGeorge = document.getElementById('angry-george');
+        const bonkedGeorge = document.getElementById('bonked-george');
+        angryGeorge.classList.add('hidden');
+        bonkedGeorge.classList.remove('hidden');
         
         // Random rotation (15 degrees left or right)
         const rotation = Math.random() > 0.5 ? 15 : -15;
         
-        // Animate dad falling like food items
+        // Get current position to ensure proper fall animation
+        const currentRect = this.dadFace.getBoundingClientRect();
+        const gameRect = this.gameArea.getBoundingClientRect();
+        const currentX = currentRect.left - gameRect.left;
+        const currentY = currentRect.top - gameRect.top;
+        
+        // Set absolute position and animate dad falling
+        this.dadFace.style.left = currentX + 'px';
+        this.dadFace.style.top = currentY + 'px';
         this.dadFace.style.transition = 'transform 2s cubic-bezier(0.55, 0.055, 0.675, 0.19)';
         this.dadFace.style.transform = `translateY(120vh) rotate(${rotation}deg)`;
         
@@ -351,7 +381,13 @@ class IslaSmashGame {
             this.dadFace.style.transition = '';
             this.dadFace.style.transform = '';
             // Reset dad's image for next time
-            dadImage.textContent = '👨';
+            const angryGeorge = document.getElementById('angry-george');
+            const bonkedGeorge = document.getElementById('bonked-george');
+            angryGeorge.classList.remove('hidden');
+            bonkedGeorge.classList.add('hidden');
+            // Hide bonk indicator
+            const bonkIndicator = this.dadFace.querySelector('.bonk-indicator');
+            bonkIndicator.classList.add('hidden');
         }, 2000);
     }
     
@@ -398,6 +434,7 @@ class IslaSmashGame {
         
         console.log('Mom appearing!');
         this.momVisible = true;
+        this.momLastAppearance = Date.now(); // Track when mom appears
         this.momFace.classList.remove('hidden');
         
         // Show random speech bubble
@@ -479,12 +516,18 @@ class IslaSmashGame {
     }
     
     startMomSpawning() {
-        // Show mom every 20-30 seconds
+        // Show mom every 30-45 seconds with 15-second cooldown
         const spawnMom = () => {
-            if (!this.isCleaning) {
+            const currentTime = Date.now();
+            const timeSinceLastAppearance = currentTime - this.momLastAppearance;
+            
+            // Only show mom if enough time has passed (15 seconds minimum)
+            if (!this.isCleaning && timeSinceLastAppearance >= 15000) {
                 this.showMom();
+                this.momLastAppearance = currentTime;
             }
-            const nextSpawn = Math.random() * 10000 + 20000; // 20-30 seconds
+            
+            const nextSpawn = Math.random() * 15000 + 30000; // 30-45 seconds
             setTimeout(spawnMom, nextSpawn);
         };
         spawnMom();
@@ -494,6 +537,192 @@ class IslaSmashGame {
         // Placeholder for sound effects
         // You can add actual audio files later
         console.log(`Playing ${type} sound`);
+    }
+    
+    endGame() {
+        console.log('Ending game');
+        this.gameStarted = false;
+        
+        // Update final scores
+        this.finalSmashCount.textContent = this.smashCounter;
+        this.finalBonkCount.textContent = this.dadBonkCounter;
+        
+        // Hide game container and show end screen
+        this.gameContainer.classList.add('hidden');
+        this.endScreen.classList.remove('hidden');
+        
+        // Start fireworks
+        this.startFireworks();
+    }
+    
+    restartGame() {
+        console.log('Restarting game');
+        
+        // Reset counters
+        this.smashCounter = 0;
+        this.dadBonkCounter = 0;
+        this.smashCount.textContent = '0';
+        this.dadBonks.textContent = '0';
+        
+        // Reset game state
+        this.isCleaning = false;
+        this.dadVisible = false;
+        this.momVisible = false;
+        this.dadSpawnStarted = false;
+        this.momSpawnStarted = false;
+        this.foodSpawningPaused = false;
+        
+        // Hide end screen and show start screen
+        this.endScreen.classList.add('hidden');
+        this.startScreen.classList.remove('hidden');
+        
+        // Clear any remaining game elements
+        const foodItems = document.querySelectorAll('.food-item');
+        foodItems.forEach(item => item.remove());
+        
+        // Reset sponge
+        this.sponge.classList.remove('draggable');
+        this.sponge.style.cursor = 'pointer';
+        
+        // Hide dad and mom
+        this.dadFace.classList.add('hidden');
+        this.momFace.classList.add('hidden');
+    }
+    
+    startFireworks() {
+        const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8800', '#8800ff'];
+        
+        const createFirework = () => {
+            const firework = document.createElement('div');
+            firework.className = 'firework';
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            firework.style.backgroundColor = color;
+            firework.style.left = Math.random() * window.innerWidth + 'px';
+            
+            // Add firework to the end screen instead of body
+            this.endScreen.appendChild(firework);
+            
+            // Create particle burst after firework reaches its peak
+            setTimeout(() => {
+                this.createParticleBurst(firework, color);
+                firework.remove(); // Remove the original firework
+            }, 1800); // Start burst at 60% of the firework animation
+        };
+        
+        // Create fireworks every 400ms for 5 seconds
+        const fireworkInterval = setInterval(createFirework, 400);
+        
+        // Grand finale after 5 seconds
+        setTimeout(() => {
+            clearInterval(fireworkInterval);
+            this.createGrandFinale();
+        }, 5000);
+    }
+    
+    createParticleBurst(firework, color) {
+        const rect = firework.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        // Create 20 particles in a burst
+        for (let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'firework-particle';
+            particle.style.backgroundColor = color;
+            particle.style.left = centerX + 'px';
+            particle.style.top = centerY + 'px';
+            
+            // Random direction for each particle
+            const angle = (Math.PI * 2 * i) / 20; // Evenly distributed in a circle
+            const distance = 50 + Math.random() * 100; // Random distance
+            const dx = Math.cos(angle) * distance;
+            const dy = Math.sin(angle) * distance;
+            
+            particle.style.setProperty('--dx', dx + 'px');
+            particle.style.setProperty('--dy', dy + 'px');
+            
+            this.endScreen.appendChild(particle);
+            
+            // Remove particle after animation
+            setTimeout(() => {
+                if (particle.parentNode) {
+                    particle.parentNode.removeChild(particle);
+                }
+            }, 1500);
+        }
+    }
+    
+    createGrandFinale() {
+        const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8800', '#8800ff', '#ffffff'];
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        
+        // Create a massive burst with particles going across the whole screen
+        for (let i = 0; i < 50; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'firework-particle';
+            particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            particle.style.left = centerX + 'px';
+            particle.style.top = centerY + 'px';
+            particle.style.width = '4px';
+            particle.style.height = '4px';
+            particle.style.boxShadow = '0 0 8px currentColor';
+            
+            // Random direction for each particle to cover the whole screen
+            const angle = (Math.PI * 2 * i) / 50; // Evenly distributed in a circle
+            const distance = 200 + Math.random() * 300; // Much larger distance for screen coverage
+            const dx = Math.cos(angle) * distance;
+            const dy = Math.sin(angle) * distance;
+            
+            particle.style.setProperty('--dx', dx + 'px');
+            particle.style.setProperty('--dy', dy + 'px');
+            
+            this.endScreen.appendChild(particle);
+            
+            // Remove particle after animation
+            setTimeout(() => {
+                if (particle.parentNode) {
+                    particle.parentNode.removeChild(particle);
+                }
+            }, 2000);
+        }
+        
+        // Create multiple smaller bursts around the center for extra effect
+        setTimeout(() => {
+            for (let burst = 0; burst < 3; burst++) {
+                setTimeout(() => {
+                    this.createMiniBurst(centerX + (Math.random() - 0.5) * 200, centerY + (Math.random() - 0.5) * 200);
+                }, burst * 300);
+            }
+        }, 500);
+    }
+    
+    createMiniBurst(x, y) {
+        const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8800', '#8800ff'];
+        
+        for (let i = 0; i < 15; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'firework-particle';
+            particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            particle.style.left = x + 'px';
+            particle.style.top = y + 'px';
+            
+            const angle = (Math.PI * 2 * i) / 15;
+            const distance = 80 + Math.random() * 120;
+            const dx = Math.cos(angle) * distance;
+            const dy = Math.sin(angle) * distance;
+            
+            particle.style.setProperty('--dx', dx + 'px');
+            particle.style.setProperty('--dy', dy + 'px');
+            
+            this.endScreen.appendChild(particle);
+            
+            setTimeout(() => {
+                if (particle.parentNode) {
+                    particle.parentNode.removeChild(particle);
+                }
+            }, 1500);
+        }
     }
 
 

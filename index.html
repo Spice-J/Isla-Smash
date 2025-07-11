@@ -3,18 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Isla Smash</title>
+    <title>Isla Smash!</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <!-- Start Screen -->
     <div id="start-screen">
-        <h1>Isla Smash</h1>
+        <img src="images/isla.png" alt="Isla" id="isla-image">
+        <div class="title-box">
+            <h1>Isla Smash!</h1>
+        </div>
         <button id="play-button">Play Game</button>
     </div>
     
     <!-- Game Container (initially hidden) -->
     <div id="game-container" class="hidden">
+        <!-- Exit button -->
+        <button id="exit-button" class="exit-button">✕</button>
+        
         <!-- Game area where food items appear -->
         <div id="game-area">
             <!-- Food items will be dynamically added here -->
@@ -25,7 +31,9 @@
             <div class="speech-bubble hidden">
                 <span class="speech-text"></span>
             </div>
-            <div class="dad-image">👨</div>
+            <div class="bonk-indicator hidden">!</div>
+            <img src="images/angry-george.png" alt="Angry Dad" class="dad-image" id="angry-george">
+            <img src="images/bonked-george.png" alt="Bonked Dad" class="dad-image hidden" id="bonked-george">
         </div>
         
         <!-- Mom's face in lower left corner -->
@@ -33,7 +41,7 @@
             <div class="speech-bubble hidden">
                 <span class="speech-text"></span>
             </div>
-            <div class="mom-image">👩</div>
+            <img src="images/kristen.png" alt="Mom" class="mom-image">
         </div>
         
         <!-- Sponge for cleanup -->
@@ -53,8 +61,26 @@
         
         <!-- Game stats -->
         <div id="game-stats">
-            <div id="score">Smash Count: <span id="smash-count">0</span></div>
+            <div id="score">Isla's Smash Count: <span id="smash-count">0</span></div>
             <div id="bonk-count">Dad Bonks: <span id="dad-bonks">0</span></div>
+        </div>
+    </div>
+    
+    <!-- End Game Screen (initially hidden) -->
+    <div id="end-screen" class="hidden">
+        <div class="score-display">
+            <h2>Wow you are crazy Isla!</h2>
+            <div class="final-score">
+                <div class="score-item">
+                    <span class="score-label">Isla's Smash Count:</span>
+                    <span id="final-smash-count">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">Dad Bonks:</span>
+                    <span id="final-bonk-count">0</span>
+                </div>
+            </div>
+            <button id="play-again-button">Play Again</button>
         </div>
     </div>
     
