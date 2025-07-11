@@ -23,6 +23,7 @@ body {
     flex-direction: column;
     overflow: hidden;
     max-width: 100%;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 #game-area {
@@ -35,8 +36,8 @@ body {
 /* Food items */
 .food-item {
     position: absolute;
-    width: 80px;
-    height: 80px;
+    width: 120px;
+    height: 120px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -96,6 +97,10 @@ body {
     cursor: pointer;
     z-index: 20;
     animation: dadAppear 0.5s ease-out;
+    /* Default position to prevent top-left placement */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .dad-image {
@@ -200,8 +205,7 @@ body {
         opacity: 0;
     }
     50% {
-        transform: translateX(-50%) scale(1.5);
-        opacity: 1;
+        transform: translateX(-50%) scale(1.2);
     }
     100% {
         transform: translateX(-50%) scale(1);
@@ -209,13 +213,116 @@ body {
     }
 }
 
+/* Happy George popup */
+.happy-george {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 25;
+    animation: happyGeorgeAppear 0.8s ease-out;
+}
+
+.happy-george-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.happy-george .speech-bubble {
+    top: -100px;
+    background: #e8f5e8;
+    border-color: #4CAF50;
+    color: #2E7D32;
+    font-size: 16px;
+    font-weight: bold;
+    animation: happyBubblePop 0.5s ease-out;
+}
+
+.happy-george .speech-bubble::after {
+    border-top-color: #4CAF50;
+}
+
+.happy-george .speech-bubble::before {
+    border-top-color: #e8f5e8;
+}
+
+@keyframes happyGeorgeAppear {
+    0% {
+        transform: scale(0) rotate(-10deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1) rotate(5deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+@keyframes happyBubblePop {
+    0% {
+        transform: translateX(-50%) scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: translateX(-50%) scale(1.2);
+    }
+    100% {
+        transform: translateX(-50%) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Splat and bonk effect animations */
+@keyframes splatPop {
+    0% {
+        transform: scale(0) rotate(0deg);
+        opacity: 0;
+    }
+    20% {
+        transform: scale(1.2) rotate(10deg);
+        opacity: 1;
+    }
+    80% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(0.8) rotate(-5deg);
+        opacity: 0;
+    }
+}
+
+@keyframes bonkPop {
+    0% {
+        transform: scale(0) rotate(0deg);
+        opacity: 0;
+    }
+    15% {
+        transform: scale(1.3) rotate(15deg);
+        opacity: 1;
+    }
+    85% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(0.7) rotate(-10deg);
+        opacity: 0;
+    }
+}
+
 /* Mom's face */
 .mom-face {
     position: absolute;
     bottom: 20px;
-    right: 12rem;
-    width: 80px;
-    height: 80px;
+    right: 20px;
+    width: 240px;
+    height: 240px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -229,26 +336,29 @@ body {
     object-fit: contain;
 }
 
-/* Mom's speech bubble - positioned above and to the left to avoid going off-screen */
+/* Spacer no longer needed since mom moved to game area */
+
+/* Mom's speech bubble - positioned above and to the left of mom */
 .mom-face .speech-bubble {
+    position: absolute;
     top: -80px;
-    right: 0;
+    left: 0;
     transform: none;
-    max-width: 450px;
-    min-width: 180px;
+    max-width: min(300px, calc(100vw - 40px));
+    min-width: 150px;
     min-height: 40px;
 }
 
-/* Mom's speech bubble arrow - positioned on the right side */
+/* Mom's speech bubble arrow - positioned on the left side */
 .mom-face .speech-bubble::after {
-    left: auto;
-    right: 20px;
+    left: 20px;
+    right: auto;
     transform: none;
 }
 
 .mom-face .speech-bubble::before {
-    left: auto;
-    right: 20px;
+    left: 20px;
+    right: auto;
     transform: none;
 }
 
@@ -263,12 +373,9 @@ body {
 
 /* Sponge always at bottom center */
 .sponge {
-    position: absolute;
-    left: 50%;
-    bottom: 20px; /* Aligned with mom's face height */
-    transform: translateX(-50%);
-    width: 70px;
-    height: 70px;
+    position: relative;
+    width: 100px;
+    height: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -280,6 +387,7 @@ body {
     z-index: 25;
     transition: box-shadow 0.2s, background 0.2s;
     pointer-events: auto;
+    flex-shrink: 0;
 }
 
 .sponge.draggable {
@@ -298,12 +406,14 @@ body {
 
 /* Bottom controls */
 #bottom-controls {
-    height: 100px;
+    min-height: 120px;
     background: rgba(255, 255, 255, 0.2);
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    padding: 20px;
     border-top: 3px solid rgba(255, 255, 255, 0.3);
+    position: relative;
 }
 
 /* Game stats */
@@ -485,6 +595,34 @@ body {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
+/* Clear stats button */
+#clear-stats-button {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    font-size: 0.9em;
+    padding: 8px 15px;
+    background: rgba(255, 0, 0, 0.8);
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+#clear-stats-button:hover {
+    background: rgba(255, 0, 0, 1);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+#clear-stats-button:active {
+    transform: scale(0.95);
+}
+
 /* Fireworks */
 .firework {
     position: absolute;
@@ -557,9 +695,10 @@ body {
 
 /* Responsive design */
 @media (max-width: 768px) {
+    /* iPhone styles */
     .food-item {
-        width: 60px;
-        height: 60px;
+        width: 90px;
+        height: 90px;
         font-size: 45px;
     }
     
@@ -570,26 +709,138 @@ body {
     }
     
     .mom-face {
-        width: 60px;
-        height: 60px;
-        font-size: 45px;
+        width: 180px;
+        height: 180px;
+        bottom: 15px;
+        right: 15px;
+    }
+    
+    .mom-face .speech-bubble {
+        max-width: 200px;
+        min-width: 120px;
+        right: 0;
     }
     
     .sponge {
-        width: 60px;
-        height: 60px;
+        width: 80px;
+        height: 80px;
         font-size: 40px;
     }
     
     .sponge.draggable {
-        width: 50px;
-        height: 50px;
+        width: 70px;
+        height: 70px;
         font-size: 35px;
     }
     
     #game-stats {
         font-size: 16px;
         padding: 10px;
+    }
+    
+    #bottom-controls {
+        min-height: 100px;
+        padding: 15px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    /* iPad styles */
+    .food-item {
+        width: 100px;
+        height: 100px;
+        font-size: 55px;
+    }
+    
+    .dad-face {
+        width: 120px;
+        height: 120px;
+        font-size: 100px;
+    }
+    
+    .mom-face {
+        width: 270px;
+        height: 270px;
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    .mom-face .speech-bubble {
+        max-width: 250px;
+        min-width: 150px;
+        right: 0;
+    }
+    
+    .sponge {
+        width: 90px;
+        height: 90px;
+        font-size: 50px;
+    }
+    
+    .sponge.draggable {
+        width: 80px;
+        height: 80px;
+        font-size: 45px;
+    }
+    
+    #game-stats {
+        font-size: 20px;
+        padding: 15px;
+    }
+    
+    #bottom-controls {
+        min-height: 140px;
+        padding: 25px;
+    }
+}
+
+@media (min-width: 1025px) {
+    /* Desktop styles */
+    .food-item {
+        width: 120px;
+        height: 120px;
+        font-size: 60px;
+    }
+    
+    .dad-face {
+        width: 120px;
+        height: 120px;
+        font-size: 100px;
+    }
+    
+    .mom-face {
+        width: 240px;
+        height: 240px;
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    .mom-face .speech-bubble {
+        max-width: 300px;
+        min-width: 150px;
+        right: 0;
+    }
+    
+    .sponge {
+        width: 100px;
+        height: 100px;
+        font-size: 45px;
+    }
+    
+    .sponge.draggable {
+        width: 90px;
+        height: 90px;
+        font-size: 40px;
+    }
+    
+    #game-stats {
+        font-size: 18px;
+        padding: 15px;
+    }
+    
+    #bottom-controls {
+        min-height: 120px;
+        padding: 20px;
     }
 }
 

@@ -6,16 +6,22 @@ class IslaSmashGame {
         this.gameArea = document.getElementById('game-area');
         this.dadFace = document.getElementById('dad-face');
         this.momFace = document.getElementById('mom-face');
+        this.happyGeorge = document.getElementById('happy-george');
         this.sponge = document.getElementById('sponge');
         this.smashCount = document.getElementById('smash-count');
         this.dadBonks = document.getElementById('dad-bonks');
+        this.highScoreDisplay = document.getElementById('high-score-display');
+        this.totalBonksDisplay = document.getElementById('total-bonks-display');
         
         // End game elements
         this.endScreen = document.getElementById('end-screen');
         this.finalSmashCount = document.getElementById('final-smash-count');
         this.finalBonkCount = document.getElementById('final-bonk-count');
+        this.finalHighScore = document.getElementById('final-high-score');
+        this.finalTotalBonks = document.getElementById('final-total-bonks');
         this.exitButton = document.getElementById('exit-button');
         this.playAgainButton = document.getElementById('play-again-button');
+        this.clearStatsButton = document.getElementById('clear-stats-button');
         
         this.smashCounter = 0;
         this.dadBonkCounter = 0;
@@ -28,15 +34,33 @@ class IslaSmashGame {
         this.momLastAppearance = 0; // Track when mom last appeared
         this.gameStarted = false;
         
+        // High score and total bonks system
+        this.highScore = this.loadHighScore();
+        this.totalBonks = this.loadTotalBonks();
+        
         // Sponge dragging variables
         this.isDraggingSponge = false;
         this.spongeDragStart = { x: 0, y: 0 };
         this.spongeOffset = { x: 0, y: 0 };
         
-        // Food emojis (you can replace these with actual images later)
-        this.foodItems = ['🍎', '🍌', '🍊', '🍓', '🍇', '🍉', '🍍', '🥝', '🥭', '🍑'];
-        // Smashed versions (using splat or similar emojis for now)
-        this.smashedFoodItems = ['💥', '💫', '💦', '🫧', '💢', '💣', '🧨', '💨', '🩸', '🫗']; // Replace with real smashed food images later
+        // Food images from the foods folder
+        this.foodItems = [
+            'images/foods/avocado-removebg-preview.png',
+            'images/foods/banana-removebg-preview.png', 
+            'images/foods/chchcherry-removebg-preview.png',
+            'images/foods/crabbypatty-removebg-preview.png',
+            'images/foods/pizza-removebg-preview.png',
+            'images/foods/tamago-removebg-preview.png'
+        ];
+        // Smashed version using flubber image
+        this.smashedFoodImage = 'images/foods/flubber-removebg-preview.png';
+        
+        // Sudz image for sponge trail
+        this.sudzImage = 'images/sudz-removebg-preview.png';
+        
+        // Splat and bonk images for effects
+        this.splatImage = 'images/splat-removebg-preview.png';
+        this.bonkImage = 'images/bonk-removebg-preview.png';
         
         // Dad's speech messages
         this.dadMessages = [
@@ -76,6 +100,10 @@ class IslaSmashGame {
         this.gameStartTime = Date.now();
         this.startScreen.classList.add('hidden');
         this.gameContainer.classList.remove('hidden');
+        
+        // Update displays with current stats
+        this.updateStatDisplays();
+        
         this.startFoodSpawning();
         this.checkDadSpawn();
         this.checkMomSpawn();
@@ -115,6 +143,10 @@ class IslaSmashGame {
         this.playAgainButton.addEventListener('click', () => this.restartGame());
         this.playAgainButton.addEventListener('touchstart', () => this.restartGame());
         
+        // Clear stats button
+        this.clearStatsButton.addEventListener('click', () => this.clearStats());
+        this.clearStatsButton.addEventListener('touchstart', () => this.clearStats());
+        
         // Prevent context menu on right click
         this.gameArea.addEventListener('contextmenu', (e) => e.preventDefault());
     }
@@ -137,14 +169,35 @@ class IslaSmashGame {
         e.stopPropagation();
         this.isDraggingSponge = true;
         
-        const rect = this.sponge.getBoundingClientRect();
+        // Get mouse/touch position first
         const clientX = e.clientX || e.touches[0].clientX;
         const clientY = e.clientY || e.touches[0].clientY;
         
-        this.spongeOffset.x = clientX - rect.left;
-        this.spongeOffset.y = clientY - rect.top;
+        // Move sponge to body for full-screen dragging
+        document.body.appendChild(this.sponge);
+        this.sponge.style.position = 'fixed';
+        this.sponge.style.zIndex = '1000';
+        this.sponge.style.display = 'flex'; // Ensure it's visible
         
-        console.log('Sponge offset:', this.spongeOffset);
+        // Calculate sponge size for proper centering
+        const spongeSize = 100; // Match the CSS width/height
+        const spongeOffset = spongeSize / 2;
+        
+        // Position sponge at mouse/touch location, centered on cursor
+        const spongeX = clientX - spongeOffset;
+        const spongeY = clientY - spongeOffset;
+        
+        // Apply position immediately
+        this.sponge.style.left = spongeX + 'px';
+        this.sponge.style.top = spongeY + 'px';
+        this.sponge.style.bottom = '';
+        this.sponge.style.transform = 'none';
+        
+        // Set offset for smooth dragging
+        this.spongeOffset.x = spongeOffset;
+        this.spongeOffset.y = spongeOffset;
+        
+        console.log('Sponge positioned at:', { x: spongeX, y: spongeY, offset: spongeOffset });
         this.sponge.style.cursor = 'grabbing';
     }
     
@@ -157,14 +210,14 @@ class IslaSmashGame {
         const clientX = e.clientX || e.touches[0].clientX;
         const clientY = e.clientY || e.touches[0].clientY;
         
-        const gameRect = this.gameArea.getBoundingClientRect();
-        const newX = clientX - gameRect.left - this.spongeOffset.x;
-        const newY = clientY - gameRect.top - this.spongeOffset.y;
+        // Position sponge at mouse/touch location, centered on cursor
+        const newX = clientX - this.spongeOffset.x;
+        const newY = clientY - this.spongeOffset.y;
         
-        // Keep sponge within game area bounds
-        const spongeSize = 70;
-        const clampedX = Math.max(0, Math.min(newX, gameRect.width - spongeSize));
-        const clampedY = Math.max(0, Math.min(newY, gameRect.height - spongeSize));
+        // Keep sponge within viewport bounds (but allow full screen dragging)
+        const spongeSize = 100; // Match the CSS width/height
+        const clampedX = Math.max(0, Math.min(newX, window.innerWidth - spongeSize));
+        const clampedY = Math.max(0, Math.min(newY, window.innerHeight - spongeSize));
         
         console.log('Dragging sponge to:', { x: clampedX, y: clampedY });
         
@@ -173,8 +226,47 @@ class IslaSmashGame {
         this.sponge.style.bottom = '';
         this.sponge.style.transform = 'none';
         
-        // Check for collision with smashed items
+        // Create sudz trail element
+        this.createSudzTrail(clientX, clientY);
+        
+        // Check for collision with smashed items (only if in game area)
         this.checkSpongeCollision();
+    }
+    
+    createSudzTrail(x, y) {
+        // Create sudz trail element
+        const sudzElement = document.createElement('div');
+        sudzElement.className = 'sudz-trail';
+        sudzElement.style.position = 'fixed';
+        sudzElement.style.left = (x - 25) + 'px'; // Center the sudz
+        sudzElement.style.top = (y - 25) + 'px';
+        sudzElement.style.width = '50px';
+        sudzElement.style.height = '50px';
+        sudzElement.style.zIndex = '999';
+        sudzElement.style.pointerEvents = 'none';
+        
+        // Create sudz image
+        const sudzImg = document.createElement('img');
+        sudzImg.src = this.sudzImage;
+        sudzImg.alt = 'Sudz';
+        sudzImg.style.width = '100%';
+        sudzImg.style.height = '100%';
+        sudzImg.style.objectFit = 'contain';
+        sudzImg.style.opacity = '0.7';
+        
+        sudzElement.appendChild(sudzImg);
+        document.body.appendChild(sudzElement);
+        
+        // Fade out and remove after a short time
+        setTimeout(() => {
+            sudzElement.style.transition = 'opacity 0.5s ease-out';
+            sudzElement.style.opacity = '0';
+            setTimeout(() => {
+                if (sudzElement.parentNode) {
+                    sudzElement.parentNode.removeChild(sudzElement);
+                }
+            }, 500);
+        }, 200);
     }
     
     stopSpongeDrag() {
@@ -182,11 +274,14 @@ class IslaSmashGame {
             this.isDraggingSponge = false;
             this.sponge.style.cursor = 'grab';
             
-            // Return sponge to original position
-            this.sponge.style.left = '50%';
-            this.sponge.style.bottom = '20px';
+            // Return sponge to bottom controls (first position - left side)
+            const bottomControls = document.getElementById('bottom-controls');
+            bottomControls.insertBefore(this.sponge, bottomControls.firstChild);
+            this.sponge.style.position = 'relative';
+            this.sponge.style.left = '';
             this.sponge.style.top = '';
-            this.sponge.style.transform = 'translateX(-50%)';
+            this.sponge.style.transform = '';
+            this.sponge.style.zIndex = '';
         }
     }
     
@@ -245,8 +340,11 @@ class IslaSmashGame {
         if (this.isCleaning) return;
         
         const target = e.target;
-        if (target.classList.contains('food-item') && !target.classList.contains('smashed')) {
-            this.smashFood(target);
+        // Check if we clicked on a food item div or its child image
+        const foodItem = target.classList.contains('food-item') ? target : target.closest('.food-item');
+        
+        if (foodItem && !foodItem.classList.contains('smashed')) {
+            this.smashFood(foodItem);
         }
     }
     
@@ -263,14 +361,23 @@ class IslaSmashGame {
         const foodItem = document.createElement('div');
         foodItem.className = 'food-item';
         
-        // Random food emoji
-        const randomFood = this.foodItems[Math.floor(Math.random() * this.foodItems.length)];
-        foodItem.textContent = randomFood;
+        // Random food image
+        const randomFoodPath = this.foodItems[Math.floor(Math.random() * this.foodItems.length)];
+        const foodImage = document.createElement('img');
+        foodImage.src = randomFoodPath;
+        foodImage.alt = 'Food';
+        foodImage.style.width = '100%';
+        foodImage.style.height = '100%';
+        foodImage.style.objectFit = 'contain';
+        foodItem.appendChild(foodImage);
+        
+        // Store the image path for later reference
+        foodItem.dataset.foodPath = randomFoodPath;
         
         // Random position
-        const x = Math.random() * (this.gameArea.offsetWidth - 80);
+        const x = Math.random() * (this.gameArea.offsetWidth - 120);
         foodItem.style.left = x + 'px';
-        foodItem.style.bottom = '-80px';
+        foodItem.style.bottom = '-120px';
         
         // Random peak height (between 30% and 80% of screen height)
         const peakHeight = Math.random() * 50 + 30; // 30% to 80% of screen height
@@ -307,14 +414,22 @@ class IslaSmashGame {
     }
     
     smashFood(foodElement) {
-        // Swap to smashed emoji
-        const original = foodElement.textContent;
-        const idx = this.foodItems.indexOf(original);
-        if (idx !== -1) {
-            foodElement.textContent = this.smashedFoodItems[idx % this.smashedFoodItems.length];
-        } else {
-            foodElement.textContent = '💥';
-        }
+        // Swap to smashed flubber image
+        const originalPath = foodElement.dataset.foodPath;
+        
+        // Clear the food item and add smashed flubber image
+        foodElement.innerHTML = '';
+        const smashedImg = document.createElement('img');
+        smashedImg.src = this.smashedFoodImage;
+        smashedImg.alt = 'Smashed food';
+        smashedImg.style.width = '100%';
+        smashedImg.style.height = '100%';
+        smashedImg.style.objectFit = 'contain';
+        foodElement.appendChild(smashedImg);
+        
+        // Show splat effect
+        this.showSplatEffect(foodElement);
+        
         foodElement.classList.add('smashed');
         this.smashCounter++;
         this.smashCount.textContent = this.smashCounter;
@@ -337,10 +452,96 @@ class IslaSmashGame {
         foodElement.style.zIndex = 5;
     }
     
+    showSplatEffect(foodElement) {
+        // Get the position of the food element
+        const rect = foodElement.getBoundingClientRect();
+        const gameRect = this.gameArea.getBoundingClientRect();
+        
+        // Calculate position relative to game area
+        const left = rect.left - gameRect.left;
+        const top = rect.top - gameRect.top;
+        
+        // Create splat effect element
+        const splatElement = document.createElement('div');
+        splatElement.className = 'splat-effect';
+        splatElement.style.position = 'absolute';
+        splatElement.style.left = (left - 20) + 'px'; // Center the splat
+        splatElement.style.top = (top - 20) + 'px';
+        splatElement.style.width = '80px';
+        splatElement.style.height = '80px';
+        splatElement.style.zIndex = '15';
+        splatElement.style.pointerEvents = 'none';
+        splatElement.style.animation = 'splatPop 1s ease-out forwards';
+        
+        // Create splat image
+        const splatImg = document.createElement('img');
+        splatImg.src = this.splatImage;
+        splatImg.alt = 'Splat';
+        splatImg.style.width = '100%';
+        splatImg.style.height = '100%';
+        splatImg.style.objectFit = 'contain';
+        
+        splatElement.appendChild(splatImg);
+        this.gameArea.appendChild(splatElement);
+        
+        // Remove splat effect after 1 second
+        setTimeout(() => {
+            if (splatElement.parentNode) {
+                splatElement.parentNode.removeChild(splatElement);
+            }
+        }, 1000);
+    }
+    
+    showBonkEffect() {
+        // Get the position of dad's face
+        const rect = this.dadFace.getBoundingClientRect();
+        const gameRect = this.gameArea.getBoundingClientRect();
+        
+        // Calculate position relative to game area
+        const left = rect.left - gameRect.left;
+        const top = rect.top - gameRect.top;
+        
+        // Create bonk effect element
+        const bonkElement = document.createElement('div');
+        bonkElement.className = 'bonk-effect';
+        bonkElement.style.position = 'absolute';
+        bonkElement.style.left = (left + 30) + 'px'; // Position near dad's head
+        bonkElement.style.top = (top - 40) + 'px';
+        bonkElement.style.width = '80px';
+        bonkElement.style.height = '80px';
+        bonkElement.style.zIndex = '25';
+        bonkElement.style.pointerEvents = 'none';
+        bonkElement.style.animation = 'bonkPop 1s ease-out forwards';
+        
+        // Create bonk image
+        const bonkImg = document.createElement('img');
+        bonkImg.src = this.bonkImage;
+        bonkImg.alt = 'Bonk';
+        bonkImg.style.width = '100%';
+        bonkImg.style.height = '100%';
+        bonkImg.style.objectFit = 'contain';
+        
+        bonkElement.appendChild(bonkImg);
+        this.gameArea.appendChild(bonkElement);
+        
+        // Remove bonk effect after 1 second
+        setTimeout(() => {
+            if (bonkElement.parentNode) {
+                bonkElement.parentNode.removeChild(bonkElement);
+            }
+        }, 1000);
+    }
+    
     bonkDad() {
         console.log('Bonking dad!');
         this.dadBonkCounter++;
         this.dadBonks.textContent = this.dadBonkCounter;
+        
+        // Update total bonks
+        this.totalBonks++;
+        this.totalBonksDisplay.textContent = this.totalBonks;
+        this.saveTotalBonks();
+        
         this.dadVisible = false;
         
         // Play bonk sound effect
@@ -349,6 +550,9 @@ class IslaSmashGame {
         // Hide speech bubble immediately
         const speechBubble = this.dadFace.querySelector('.speech-bubble');
         speechBubble.classList.add('hidden');
+        
+        // Show bonk effect
+        this.showBonkEffect();
         
         // Show bonk indicator
         const bonkIndicator = this.dadFace.querySelector('.bonk-indicator');
@@ -425,6 +629,7 @@ class IslaSmashGame {
         
         this.dadFace.style.left = x + 'px';
         this.dadFace.style.top = y + 'px';
+        this.dadFace.style.transform = 'none'; // Reset transform to allow absolute positioning
         
         // Dad stays until bonked - no timeout
     }
@@ -444,6 +649,11 @@ class IslaSmashGame {
         
         speechText.textContent = randomMessage;
         speechBubble.classList.remove('hidden');
+        
+        // Ensure speech bubble stays within viewport bounds - delay to allow rendering
+        setTimeout(() => {
+            this.adjustSpeechBubblePosition(speechBubble);
+        }, 50); // Small delay to ensure bubble is fully rendered
         
         // Pause food spawning
         this.foodSpawningPaused = true;
@@ -477,9 +687,75 @@ class IslaSmashGame {
             this.sponge.classList.remove('draggable');
             this.sponge.style.cursor = 'pointer';
             this.foodSpawningPaused = false;
+            
+            // Show happy George after a short delay
+            setTimeout(() => this.showHappyGeorge(), 500);
         } else {
             // Still have smashed items, check again in 1 second
             setTimeout(() => this.checkCleanupComplete(), 1000);
+        }
+    }
+    
+    showHappyGeorge() {
+        console.log('Showing happy George!');
+        
+        // Position happy George in the center of the game area
+        const gameAreaWidth = this.gameArea.offsetWidth;
+        const gameAreaHeight = this.gameArea.offsetHeight;
+        const happyGeorgeWidth = 120;
+        const happyGeorgeHeight = 120;
+        
+        const x = (gameAreaWidth - happyGeorgeWidth) / 2;
+        const y = (gameAreaHeight - happyGeorgeHeight) / 2;
+        
+        this.happyGeorge.style.left = x + 'px';
+        this.happyGeorge.style.top = y + 'px';
+        this.happyGeorge.classList.remove('hidden');
+        
+        // Hide happy George after 3 seconds
+        setTimeout(() => {
+            this.happyGeorge.classList.add('hidden');
+        }, 3000);
+    }
+    
+    adjustSpeechBubblePosition(speechBubble) {
+        // Get the speech bubble's current position and size
+        const bubbleRect = speechBubble.getBoundingClientRect();
+        const momRect = this.momFace.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        
+        console.log('Checking positions:', {
+            momLeft: momRect.left,
+            momRight: momRect.right,
+            viewportWidth: viewportWidth,
+            bubbleLeft: bubbleRect.left,
+            bubbleRight: bubbleRect.right
+        });
+        
+        // Check if mom is partially off screen - use a larger safety margin
+        if (momRect.right > viewportWidth - 40) {
+            // Mom is off screen, adjust her position
+            const overflow = momRect.right - (viewportWidth - 40);
+            const currentMargin = parseInt(this.momFace.style.marginRight || 0);
+            // Only adjust if we haven't already adjusted for this overflow
+            if (currentMargin < overflow) {
+                this.momFace.style.marginRight = overflow + 'px';
+                console.log('Adjusted mom position to stay within viewport, new margin:', this.momFace.style.marginRight);
+            }
+        }
+        
+        // Check if the speech bubble extends beyond the left edge of the viewport
+        if (bubbleRect.left < 40) {
+            // Calculate how much it's extending beyond the viewport
+            const overflow = 40 - bubbleRect.left;
+            
+            // Adjust the left position to keep it within bounds
+            const currentLeft = parseInt(speechBubble.style.left || 0);
+            // Only adjust if we haven't already adjusted for this overflow
+            if (currentLeft < overflow) {
+                speechBubble.style.left = overflow + 'px';
+                console.log('Adjusted speech bubble position to stay within viewport, new left:', speechBubble.style.left);
+            }
         }
     }
     
@@ -504,15 +780,52 @@ class IslaSmashGame {
     }
     
     startDadSpawning() {
-        // Show dad every 8-15 seconds
+        let lastDadSpawn = Date.now();
+        const maxTimeWithoutDad = 45000; // 45 seconds maximum
+        
+        // Show dad every 8-15 seconds with fallback timer
         const spawnDad = () => {
-            if (!this.isCleaning) {
+            const currentTime = Date.now();
+            const timeSinceLastSpawn = currentTime - lastDadSpawn;
+            
+            // Force dad to appear if it's been too long
+            if (timeSinceLastSpawn >= maxTimeWithoutDad) {
+                console.log('Forcing dad to appear - been too long!');
+                if (!this.isCleaning && !this.dadVisible) {
+                    this.showDad();
+                    lastDadSpawn = currentTime;
+                }
+            } else if (!this.isCleaning && !this.dadVisible) {
+                // Normal random spawn
                 this.showDad();
+                lastDadSpawn = currentTime;
             }
+            
+            // Schedule next spawn with random timing
             const nextSpawn = Math.random() * 7000 + 8000; // 8-15 seconds
             setTimeout(spawnDad, nextSpawn);
         };
+        
+        // Start the spawning cycle
         spawnDad();
+        
+        // Fallback timer to ensure dad appears within 45 seconds
+        const fallbackTimer = () => {
+            const currentTime = Date.now();
+            const timeSinceLastSpawn = currentTime - lastDadSpawn;
+            
+            if (timeSinceLastSpawn >= maxTimeWithoutDad && !this.isCleaning && !this.dadVisible) {
+                console.log('Fallback timer: Forcing dad to appear!');
+                this.showDad();
+                lastDadSpawn = currentTime;
+            }
+            
+            // Check again in 5 seconds
+            setTimeout(fallbackTimer, 5000);
+        };
+        
+        // Start the fallback timer
+        setTimeout(fallbackTimer, 5000);
     }
     
     startMomSpawning() {
@@ -543,9 +856,14 @@ class IslaSmashGame {
         console.log('Ending game');
         this.gameStarted = false;
         
+        // Check for new high score
+        const isNewHighScore = this.checkHighScore();
+        
         // Update final scores
         this.finalSmashCount.textContent = this.smashCounter;
         this.finalBonkCount.textContent = this.dadBonkCounter;
+        this.finalHighScore.textContent = this.highScore;
+        this.finalTotalBonks.textContent = this.totalBonks;
         
         // Hide game container and show end screen
         this.gameContainer.classList.add('hidden');
@@ -553,6 +871,11 @@ class IslaSmashGame {
         
         // Start fireworks
         this.startFireworks();
+        
+        // Show high score celebration if it's a new record
+        if (isNewHighScore) {
+            this.showHighScoreCelebration();
+        }
     }
     
     restartGame() {
@@ -724,8 +1047,237 @@ class IslaSmashGame {
             }, 1500);
         }
     }
-
-
+    
+    // High score methods
+    loadHighScore() {
+        const saved = localStorage.getItem('islaSmashHighScore');
+        return saved ? parseInt(saved) : 0;
+    }
+    
+    saveHighScore(score) {
+        localStorage.setItem('islaSmashHighScore', score.toString());
+        this.highScore = score;
+        console.log('New high score saved:', score);
+    }
+    
+    checkHighScore() {
+        if (this.smashCounter > this.highScore) {
+            this.saveHighScore(this.smashCounter);
+            return true;
+        }
+        return false;
+    }
+    
+    // Total bonks methods
+    loadTotalBonks() {
+        const saved = localStorage.getItem('islaSmashTotalBonks');
+        return saved ? parseInt(saved) : 0;
+    }
+    
+    saveTotalBonks() {
+        localStorage.setItem('islaSmashTotalBonks', this.totalBonks.toString());
+        console.log('Total bonks saved:', this.totalBonks);
+    }
+    
+    // Update all stat displays
+    updateStatDisplays() {
+        this.highScoreDisplay.textContent = this.highScore;
+        this.totalBonksDisplay.textContent = this.totalBonks;
+    }
+    
+    // Clear all stats
+    clearStats() {
+        this.showClearStatsConfirmation();
+    }
+    
+    showClearStatsConfirmation() {
+        // Create custom confirmation popup
+        const popup = document.createElement('div');
+        popup.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            animation: fadeIn 0.3s ease-out;
+        `;
+        
+        const dialog = document.createElement('div');
+        dialog.style.cssText = `
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            margin: 20px;
+            animation: popupSlide 0.3s ease-out;
+        `;
+        
+        dialog.innerHTML = `
+            <h3 style="margin: 0 0 20px 0; color: #333; font-family: 'Comic Sans MS', cursive, sans-serif;">Clear All Stats?</h3>
+            <p style="margin: 0 0 25px 0; color: #666; font-family: 'Comic Sans MS', cursive, sans-serif; line-height: 1.4;">
+                This will reset your high score and total dad bonks to 0. This action cannot be undone.
+            </p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button id="confirm-yes" style="
+                    padding: 10px 20px;
+                    background: #ff4444;
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                    font-family: 'Comic Sans MS', cursive, sans-serif;
+                    font-weight: bold;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                ">Yes, Clear Stats</button>
+                <button id="confirm-no" style="
+                    padding: 10px 20px;
+                    background: #666;
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                    font-family: 'Comic Sans MS', cursive, sans-serif;
+                    font-weight: bold;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                ">No, Keep Stats</button>
+            </div>
+        `;
+        
+        popup.appendChild(dialog);
+        document.body.appendChild(popup);
+        
+        // Add hover effects
+        const yesBtn = dialog.querySelector('#confirm-yes');
+        const noBtn = dialog.querySelector('#confirm-no');
+        
+        yesBtn.addEventListener('mouseenter', () => {
+            yesBtn.style.background = '#ff6666';
+            yesBtn.style.transform = 'scale(1.05)';
+        });
+        yesBtn.addEventListener('mouseleave', () => {
+            yesBtn.style.background = '#ff4444';
+            yesBtn.style.transform = 'scale(1)';
+        });
+        
+        noBtn.addEventListener('mouseenter', () => {
+            noBtn.style.background = '#888';
+            noBtn.style.transform = 'scale(1.05)';
+        });
+        noBtn.addEventListener('mouseleave', () => {
+            noBtn.style.background = '#666';
+            noBtn.style.transform = 'scale(1)';
+        });
+        
+        // Handle button clicks
+        yesBtn.addEventListener('click', () => {
+            this.executeClearStats();
+            document.body.removeChild(popup);
+        });
+        
+        noBtn.addEventListener('click', () => {
+            document.body.removeChild(popup);
+        });
+        
+        // Close on background click
+        popup.addEventListener('click', (e) => {
+            if (e.target === popup) {
+                document.body.removeChild(popup);
+            }
+        });
+    }
+    
+    executeClearStats() {
+        // Clear localStorage
+        localStorage.removeItem('islaSmashHighScore');
+        localStorage.removeItem('islaSmashTotalBonks');
+        
+        // Reset variables
+        this.highScore = 0;
+        this.totalBonks = 0;
+        
+        // Update displays
+        this.updateStatDisplays();
+        this.finalHighScore.textContent = '0';
+        this.finalTotalBonks.textContent = '0';
+        
+        // Show confirmation message
+        this.showClearStatsMessage();
+        
+        console.log('All stats cleared');
+    }
+    
+    showClearStatsMessage() {
+        // Create a confirmation message
+        const message = document.createElement('div');
+        message.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 255, 0, 0.9);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            animation: clearStatsPop 0.5s ease-out;
+        `;
+        message.textContent = 'Stats Cleared! ✅';
+        
+        this.endScreen.appendChild(message);
+        
+        // Remove the message after 2 seconds
+        setTimeout(() => {
+            if (message.parentNode) {
+                message.parentNode.removeChild(message);
+            }
+        }, 2000);
+    }
+    
+    showHighScoreCelebration() {
+        // Create a special high score message
+        const highScoreMessage = document.createElement('div');
+        highScoreMessage.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #333;
+            padding: 20px 30px;
+            border-radius: 15px;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            animation: highScorePop 0.5s ease-out;
+        `;
+        highScoreMessage.innerHTML = `
+            🎉 NEW HIGH SCORE! 🎉<br>
+            Isla smashed ${this.smashCounter} items!<br>
+            <span style="font-size: 0.8em;">Previous best: ${this.highScore}</span>
+        `;
+        
+        this.endScreen.appendChild(highScoreMessage);
+        
+        // Remove the message after 4 seconds
+        setTimeout(() => {
+            if (highScoreMessage.parentNode) {
+                highScoreMessage.parentNode.removeChild(highScoreMessage);
+            }
+        }, 4000);
+    }
 }
 
 // Add fadeOut animation to CSS
@@ -739,6 +1291,54 @@ style.textContent = `
         100% {
             opacity: 0;
             transform: scale(0.5);
+        }
+    }
+    
+    @keyframes highScorePop {
+        0% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.5);
+        }
+        50% {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        100% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+    }
+    
+    @keyframes clearStatsPop {
+        0% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.5);
+        }
+        50% {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        100% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+    }
+    
+    @keyframes fadeIn {
+        0% {
+            opacity: 0;
+        }
+        100% {
+            opacity: 1;
+        }
+    }
+    
+    @keyframes popupSlide {
+        0% {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.9);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
         }
     }
 `;
