@@ -789,7 +789,7 @@ class IslaSmashGame {
     this.happyGeorge.style.top = y + "px";
     this.happyGeorge.classList.remove("hidden");
 
-    const maleVoice = ['Rocko (English (United States))'];
+    const maleVoice = ['Whisper'];
 
     const foundVoice = speechSynthesis
       .getVoices()
